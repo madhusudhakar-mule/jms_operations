@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="jms_publish_Flow" doc:id="8e14c439-308c-4ec6-9483-6b1af89b56ac" >
+		<http:listener doc:name="Listener" doc:id="5e5fcd04-3ff5-4430-b40e-0271d1f97c40" config-ref="HTTP_Listener_config" path="/jms-publish"/>
+		<logger level="INFO" doc:name="start" doc:id="b685ab93-90bd-4541-9288-01b5d0e53662" message="=====start==========="/>
+		<jms:publish doc:name="Publish" doc:id="d4f280a7-d0a9-4ac4-b37c-f54d3a1f94ea" config-ref="JMS_Config_localhost" destination="testQ"/>
+		<set-payload value='#["Reveived your message"]' doc:name="Set Payload" doc:id="b6bb716f-7540-473b-b1e2-24059a55335b" />
+		<logger level="INFO" doc:name="end" doc:id="cda649f7-8cfe-4cf7-95b0-b659bd019611" message="===============end==========="/>
+	</flow>
+	<flow name="jms_OnNew_Message_Flow" doc:id="f01279b0-1640-4bbc-b4ce-d3065d472bb5" >
+		<jms:listener doc:name="On New Message-testQ" doc:id="e12b648f-ae0a-4bd9-89b2-2dc7fe7ade9e" config-ref="JMS_Config_localhost" destination="testQ" ackMode="AUTO" inboundContentType="application/json">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:listener>
+		<logger level="INFO" doc:name="start_Logger" doc:id="33f989b3-9964-4130-9e17-bc81b14b0cb4" message="====start======="/>
+		<logger level="INFO" doc:name="log_Logger" doc:id="e099740c-ad1e-45bc-8fef-50f5baba14e4" message="#[payload]"/>
+		<ee:transform doc:name="Transform Message" doc:id="d774b57e-18b9-4a64-a488-433cbf3fa762" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:id="19e8acf1-2a0f-4662-a212-1231ddec2693" path="C:\New folder (2)\writefolder\madhu.json" mode="CREATE_NEW"/>
+		<logger level="INFO" doc:name="End_Logger" doc:id="28a06b38-064f-459a-a40b-bda5d47a0d96" message="===end===="/>
+	</flow>
+	<flow name="jms_comsume_Flow" doc:id="925c08b0-da4e-4d76-82f7-3f7a1d61b2b8" >
+		<http:listener doc:name="jms_operatons_Flow" doc:id="06aa78e5-d5f5-4b82-a2c7-e9deaf10e232" config-ref="HTTP_Listener_config" path="/jms"/>
+		<logger level="INFO" doc:name="Start_Logger" doc:id="842c2a74-bff2-4826-a082-87eaa6e1480a" message="=======start============="/>
+		<jms:consume doc:name="Consume from testQ" doc:id="9e9d47d2-2ee7-495e-94c1-db48ca5e83d5" ackMode="IMMEDIATE" config-ref="JMS_Config_localhost" destination="testQ">
+			<jms:consumer-type >
+				<jms:queue-consumer />
+			</jms:consumer-type>
+		</jms:consume>
+		<logger level="INFO" doc:name="Log_payload" doc:id="fa58a5cc-6d1d-41d0-a338-4187490e7ca8" message="#[payload]"/>
+		<logger level="INFO" doc:name="End_Logger" doc:id="f04ac137-bb88-4383-9203-629261c492ef" message="====end=========="/>
+	</flow>
+</mule>
